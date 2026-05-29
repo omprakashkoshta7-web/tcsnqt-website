@@ -15,8 +15,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 
 app.post("/api/compile", async (req, res) => {
-  const { language, version, code, stdin } = req.body;
-  if (!language || !version || !code) {
+  const { language, version, code, files, stdin } = req.body;
+  const content = code || (files && files[0] && files[0].content);
+  if (!language || !version || !content) {
     return res.status(400).json({ error: "Missing required fields" });
   }
   try {
@@ -26,7 +27,7 @@ app.post("/api/compile", async (req, res) => {
       body: JSON.stringify({
         language,
         version,
-        files: [{ content: code }],
+        files: [{ content }],
         stdin: stdin || "",
       }),
     });
