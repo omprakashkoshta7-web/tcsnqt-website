@@ -247,10 +247,10 @@ export default function TCSNQTApp() {
                   <QRCodeCanvas value={upiDeepLink} size={200} level="H" />
                 </div>
                 <p className="text-[10px] text-gray-500 mt-3 font-mono break-all bg-gray-800 rounded px-2 py-1">Order: {orderId}</p>
-                <div className="mt-4 flex gap-2 justify-center">
-                  <button onClick={() => window.open(upiDeepLink, "_blank")} className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-all">Pay via UPI</button>
-                  <button onClick={() => navigator.clipboard.writeText(upiDeepLink)} className="flex-1 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition-all border border-gray-700">Copy Link</button>
-                </div>
+                <button onClick={() => navigator.clipboard.writeText(upiDeepLink)} className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium rounded-lg transition-all border border-gray-700">
+                  Copy UPI Link
+                </button>
+                <p className="mt-3 text-[11px] text-gray-500">Open any UPI app on your phone and scan the QR code above to pay ₹{selectedProduct.price}</p>
                 <button onClick={() => setPaymentStep("utr")} className="mt-3 w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-emerald-900/40">I've Paid — Enter UTR</button>
                 <button onClick={resetModal} className="mt-2 w-full px-4 py-2 text-gray-400 hover:text-white text-sm rounded-lg transition-all">Cancel</button>
               </>
