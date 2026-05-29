@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "npm install && cd server && npm install && npm run build --prefix ..",
+  "outputDirectory": "build",
   "builds": [
     {
       "src": "api/index.js",
