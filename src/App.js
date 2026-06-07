@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 import ProductCard from "./components/ProductCard";
 import PaymentModal from "./components/PaymentModal";
+import AdminPanel from "./components/AdminPanel";
 
 const API_BASE = process.env.REACT_APP_API_URL || "";
 
 const PRODUCTS = [
-  { id: 1, name: "Complete Aptitude PDF", price: 29, color: "indigo", whatsapp: "https://chat.whatsapp.com/F1FLKhjhHVY5von88wddJU?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", description: "20+ Topic Summaries, Shortcut Methods, and Level-wise Questions designed for TCS NQT 2025.", features: ["Time & Work, Profit–Loss, Ratio, and Geometry topics", "Level-wise Practice Sets (L1–L5)", "Formula Tables & Short Tricks"] },
-  { id: 2, name: "Verbal Mastery Set", price: 29, color: "pink", whatsapp: "https://chat.whatsapp.com/CuGU5rWKUahHC70Q7dYz9R?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", description: "Polish your grammar, vocabulary, and reading skills with topic-wise questions and explanations.", features: ["Grammar & Sentence Correction", "Reading Comprehension Practice", "Vocabulary, Antonyms, and Synonyms"] },
-  { id: 3, name: "Programming Practice Set", price: 29, color: "green", whatsapp: "https://chat.whatsapp.com/JMiqqmbLmSk5fcwgSVnp7i?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", description: "C, C++, Java, and Python MCQs with concept explanations & coding snippets for TCS-style problems.", features: ["50+ Programming MCQs", "Language Syntax & Concepts", "C, C++, Java, and Python Basics"] },
-  { id: 4, name: "Reasoning Booster Pack", price: 29, color: "yellow", whatsapp: "https://chat.whatsapp.com/ChxD0tPjkGKCGCLDsshvep?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", description: "Reasoning ability questions covering puzzles, seating arrangements, syllogisms, and more.", features: ["Puzzles & Seating Arrangements Questions", "Syllogisms, Blood Relations, and Directions", "Detailed Explanations for Each Question"] },
-  { id: 5, name: "Previous Year Questions (PYQs)", price: 29, color: "yellow", whatsapp: "https://chat.whatsapp.com/F1FLKhjhHVY5von88wddJU?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", description: "Curated set of 2021–2024 TCS NQT & TCS Digital previous year questions with detailed explanations.", features: ["Actual TCS NQT & Digital Questions (2021–2024)", "Solutions with step-by-step explanations", "Topic tags for each question (Aptitude, Verbal, Reasoning, etc.)"] },
+  { id: 1, name: "Complete Aptitude PDF", price: 29, color: "indigo", whatsapp: "https://chat.whatsapp.com/F1FLKhjhHVY5von88wddJU?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "", description: "20+ Topic Summaries, Shortcut Methods, and Level-wise Questions designed for TCS NQT 2025.", features: ["Time & Work, Profit–Loss, Ratio, and Geometry topics", "Level-wise Practice Sets (L1–L5)", "Formula Tables & Short Tricks"] },
+  { id: 2, name: "Verbal Mastery Set", price: 29, color: "pink", whatsapp: "https://chat.whatsapp.com/CuGU5rWKUahHC70Q7dYz9R?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "", description: "Polish your grammar, vocabulary, and reading skills with topic-wise questions and explanations.", features: ["Grammar & Sentence Correction", "Reading Comprehension Practice", "Vocabulary, Antonyms, and Synonyms"] },
+  { id: 3, name: "Programming Practice Set", price: 29, color: "green", whatsapp: "https://chat.whatsapp.com/JMiqqmbLmSk5fcwgSVnp7i?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "", description: "C, C++, Java, and Python MCQs with concept explanations & coding snippets for TCS-style problems.", features: ["50+ Programming MCQs", "Language Syntax & Concepts", "C, C++, Java, and Python Basics"] },
+  { id: 4, name: "Reasoning Booster Pack", price: 29, color: "yellow", whatsapp: "https://chat.whatsapp.com/ChxD0tPjkGKCGCLDsshvep?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "", description: "Reasoning ability questions covering puzzles, seating arrangements, syllogisms, and more.", features: ["Puzzles & Seating Arrangements Questions", "Syllogisms, Blood Relations, and Directions", "Detailed Explanations for Each Question"] },
+  { id: 5, name: "Previous Year Questions (PYQs)", price: 29, color: "yellow", whatsapp: "https://chat.whatsapp.com/F1FLKhjhHVY5von88wddJU?mode=wwt", form: "https://docs.google.com/forms/d/e/1FAIpQLSfTpVy8Ue7nfakGf7Qie4usfIbm2frL3UKOfk1AhPi6r_o_Cw/viewform?usp=publish-editor", pdf: "", description: "Curated set of 2021–2024 TCS NQT & TCS Digital previous year questions with detailed explanations.", features: ["Actual TCS NQT & Digital Questions (2021–2024)", "Solutions with step-by-step explanations", "Topic tags for each question (Aptitude, Verbal, Reasoning, etc.)"] },
 ];
 
 export default function TCSNQTApp() {
@@ -17,6 +18,15 @@ export default function TCSNQTApp() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [copied, setCopied] = useState(false);
   const [purchased, setPurchased] = useState({});
+  const [pdfUrls, setPdfUrls] = useState({});
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  const fetchPdfs = () => {
+    fetch(`${API_BASE}/api/pdfs`)
+      .then((res) => res.json())
+      .then((data) => setPdfUrls(data || {}))
+      .catch((err) => console.error("Fetch PDFs error:", err));
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("tcsnqt_purchased");
@@ -25,6 +35,18 @@ export default function TCSNQTApp() {
         setPurchased(JSON.parse(stored));
       } catch (e) {}
     }
+    fetchPdfs();
+  }, []);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "A") {
+        e.preventDefault();
+        setShowAdmin(true);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
   const handleCopyForm = (link) => {
@@ -49,10 +71,18 @@ export default function TCSNQTApp() {
   };
 
   const handleViewPdf = (product) => {
-    if (product.pdf) {
-      window.open(product.pdf, "_blank");
+    const url = pdfUrls[product.id] || product.pdf;
+    if (url) {
+      window.open(url, "_blank");
+    } else {
+      alert("PDF not available yet. Please contact admin.");
     }
   };
+
+  const productsWithPdfs = PRODUCTS.map((p) => ({
+    ...p,
+    pdf: pdfUrls[p.id] || p.pdf,
+  }));
 
   const tabCls = (tab) =>
     `px-4 sm:px-6 py-2.5 text-sm font-medium rounded-lg transition-all ${
@@ -60,7 +90,7 @@ export default function TCSNQTApp() {
     }`;
 
   return (
-    <div className="min-h-screen bg-gray-950 font-sans">
+    <div className="min-h-screen bg-gray-950 font-sans flex flex-col">
       <div className="fixed inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900 bg-[length:400%_400%] animate-gradient -z-10" />
 
       <header className="sticky top-0 z-40 border-b border-gray-800 bg-gray-950/80 backdrop-blur-xl">
@@ -78,7 +108,7 @@ export default function TCSNQTApp() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
         {activeTab === "home" && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center py-4 sm:py-8">
@@ -86,7 +116,7 @@ export default function TCSNQTApp() {
               <p className="mt-2 sm:mt-3 text-sm sm:text-base text-gray-400 max-w-2xl mx-auto">Choose your module — join the WhatsApp group for guidance, preview, and instant access.</p>
             </div>
             <div className="grid gap-5">
-              {PRODUCTS.map((p) => (
+              {productsWithPdfs.map((p) => (
                 <ProductCard
                   key={p.id}
                   product={p}
@@ -103,6 +133,13 @@ export default function TCSNQTApp() {
         )}
       </main>
 
+      <footer className="border-t border-gray-800/50 py-4 mt-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between text-xs text-gray-600">
+          <p>© 2025 TCS NQT Preparation Hub</p>
+          <button onClick={() => setShowAdmin(true)} className="hover:text-gray-400 transition-colors">Admin</button>
+        </div>
+      </footer>
+
       {selectedProduct && (
         <PaymentModal
           product={selectedProduct}
@@ -110,6 +147,7 @@ export default function TCSNQTApp() {
           onPurchase={() => handlePurchase(selectedProduct.id)}
         />
       )}
+      <AdminPanel isOpen={showAdmin} onClose={() => setShowAdmin(false)} products={PRODUCTS} />
     </div>
   );
 }

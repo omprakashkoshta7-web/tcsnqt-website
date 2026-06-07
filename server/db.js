@@ -109,6 +109,14 @@ function initSchema() {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pdfs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id INTEGER NOT NULL UNIQUE,
+      url TEXT NOT NULL,
+      uploaded_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
   persistDb();
 }
 

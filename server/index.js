@@ -7,6 +7,8 @@ const Razorpay = require("razorpay");
 const { getDb, persistDb } = require("./db");
 const authRoutes = require("./routes/auth");
 const paymentRoutes = require("./routes/payments");
+const adminRoutes = require("./routes/admin");
+const pdfRoutes = require("./routes/pdfs");
 
 const app = express();
 
@@ -15,6 +17,8 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api", pdfRoutes);
 
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_1DP5mmOlF5G5ag",
