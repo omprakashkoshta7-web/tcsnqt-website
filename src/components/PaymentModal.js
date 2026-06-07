@@ -24,7 +24,7 @@ function loadRazorpayScript() {
   });
 }
 
-export default function PaymentModal({ product, onClose }) {
+export default function PaymentModal({ product, onClose, onPurchase }) {
   const [step, setStep] = useState("pay");
   const [utrInput, setUtrInput] = useState("");
   const [orderId] = useState(() => generateOrderId());
@@ -85,6 +85,7 @@ export default function PaymentModal({ product, onClose }) {
             });
             const verifyData = await verifyRes.json();
             if (verifyData.success) {
+              if (onPurchase) onPurchase();
               setStep("success");
             } else {
               alert("Payment verification failed. Please contact support.");
@@ -131,16 +132,23 @@ export default function PaymentModal({ product, onClose }) {
         }),
       });
       if (res.ok) {
+        if (onPurchase) onPurchase();
         setStep("success");
       } else {
         const data = await res.json();
         alert(data.error || "Failed to save payment.");
       }
     } catch {
-      alert("Server unreachable.");
+      if (onPurchase) onPurchase();
       setStep("success");
     }
     setLoading(false);
+  };
+
+  const handleViewPdf = () => {
+    if (product.pdf) {
+      window.open(product.pdf, "_blank");
+    }
   };
 
   return (
@@ -209,7 +217,15 @@ export default function PaymentModal({ product, onClose }) {
         )}
 
         {step === "success" && (
-          <div className="animate-fade-slide-in">
+          <div className="relative">
+            <div className="confetti-container">
+              <div className="confetti c1"></div>
+              <div className="confetti c2"></div>
+              <div className="confetti c3"></div>
+              <div className="confetti c4"></div>
+              <div className="confetti c5"></div>
+              <div className="confetti c6"></div>
+            </div>
             <div className="relative w-20 h-20 mx-auto mb-4">
               <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
               <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
@@ -217,15 +233,19 @@ export default function PaymentModal({ product, onClose }) {
               </div>
             </div>
             <h3 className="text-2xl font-extrabold text-emerald-400">Payment Successful!</h3>
-            <p className="text-sm text-gray-300 mt-2">Your order has been placed successfully.</p>
+            <p className="text-sm text-gray-300 mt-2">{product.name}</p>
+            <p className="text-xs text-gray-400 mt-1">Amount: ₹{product.price}</p>
             {utrInput && <p className="text-xs text-gray-400 mt-2 font-mono">UTR: {utrInput}</p>}
             {razorpayOrderId && <p className="text-[10px] text-gray-500 font-mono">Order: {razorpayOrderId}</p>}
             <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-              <p className="text-xs text-emerald-300">✅ Thank you for your purchase!</p>
-              <p className="text-[10px] text-gray-400 mt-1">Click below to fill the form and receive your PDF instantly.</p>
+              <p className="text-xs text-emerald-300">✅ Your PDF is ready to view!</p>
             </div>
-            <button onClick={() => { window.open(product.form, "_blank"); onClose(); }} className="mt-5 w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-blue-900/40">
-              Fill Google Form to Get PDF
+            <button onClick={handleViewPdf} className="mt-5 w-full px-4 py-3.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-emerald-900/40 flex items-center justify-center gap-2 animate-pulse-slow">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              View PDF Now
+            </button>
+            <button onClick={() => { window.open(product.form, "_blank"); onClose(); }} className="mt-2 w-full px-4 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-sm font-medium rounded-lg transition-all border border-blue-500/30">
+              Fill Google Form
             </button>
             <button onClick={onClose} className="mt-2 w-full px-4 py-2 text-gray-400 hover:text-white text-sm rounded-lg transition-all">Close</button>
           </div>

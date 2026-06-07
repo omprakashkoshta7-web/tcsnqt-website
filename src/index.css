@@ -23,3 +23,52 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Confetti animation */
+.confetti-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.confetti {
+  position: absolute;
+  width: 8px;
+  height: 14px;
+  top: -20px;
+  border-radius: 2px;
+  animation: confettiFall 2.5s ease-out forwards;
+}
+
+.confetti.c1 {
+  left: 15%;
+  background: #10b981;
+  animation-delay: 0s;
+}
+.confetti.c2 {
+  left: 30%;
+  background: #3b82f6;
+  animation-delay: 0.2s;
+}
+.confetti.c3 {
+  left: 45%;
+  background: #f59e0b;
+  animation-delay: 0.1s;
+}
+.confetti.c4 {
+  left: 60%;
+  background: #ec4899;
+  animation-delay: 0.3s;
+}
+.confetti.c5 {
+  left: 75%;
+  background: #8b5cf6;
+  animation-delay: 0.15s;
+}
+.confetti.c6 {
+  left: 90%;
+  background: #06b6d4;
+  animation-delay: 0.25s;
+}

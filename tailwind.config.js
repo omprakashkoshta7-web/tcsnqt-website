@@ -12,6 +12,7 @@ module.exports = {
         "fade-in": "fadeIn 0.3s ease-out",
         gradient: "gradientMove 25s ease infinite",
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "confetti-fall": "confettiFall 2.5s ease-out forwards",
       },
       keyframes: {
         fadeSlideIn: {
@@ -25,6 +26,10 @@ module.exports = {
         gradientMove: {
           "0%, 100%": { backgroundPosition: "0% 50%" },
           "50%": { backgroundPosition: "100% 50%" },
+        },
+        confettiFall: {
+          "0%": { opacity: "1", transform: "translateY(-20px) rotate(0deg)" },
+          "100%": { opacity: "0", transform: "translateY(300px) rotate(720deg)" },
         },
       },
     },
