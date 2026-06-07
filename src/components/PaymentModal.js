@@ -9,17 +9,113 @@ function generateOrderId() {
   return `TXN${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 }
 
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (document.getElementById("razorpay-script")) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = "razorpay-script";
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export default function PaymentModal({ product, onClose }) {
-  const [step, setStep] = useState("qr");
+  const [step, setStep] = useState("pay");
   const [utrInput, setUtrInput] = useState("");
   const [orderId] = useState(() => generateOrderId());
   const [loading, setLoading] = useState(false);
+  const [razorpayOrderId, setRazorpayOrderId] = useState("");
 
   if (!product) return null;
 
   const upiDeepLink = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${product.price}&cu=INR&tn=${orderId}`;
 
-  const handleSubmit = async () => {
+  const handleRazorpayPay = async () => {
+    setLoading(true);
+    const res = await loadRazorpayScript();
+    if (!res) {
+      alert("Razorpay SDK failed to load. Please check your connection.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const orderRes = await fetch(`${API_BASE}/api/razorpay/order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: product.price,
+          currency: "INR",
+          receipt: orderId,
+        }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.orderId) {
+        alert("Failed to create order. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      setRazorpayOrderId(orderData.orderId);
+
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: MERCHANT_NAME,
+        description: product.name,
+        order_id: orderData.orderId,
+        handler: async function (response) {
+          try {
+            const verifyRes = await fetch(`${API_BASE}/api/razorpay/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                product: product.name,
+                price: product.price,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              setStep("success");
+            } else {
+              alert("Payment verification failed. Please contact support.");
+            }
+          } catch (err) {
+            alert("Verification error. Please contact support.");
+          }
+          setLoading(false);
+        },
+        prefill: {},
+        theme: { color: "#2563eb" },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        alert("Payment failed: " + response.error.description);
+        setLoading(false);
+      });
+      rzp.open();
+    } catch (err) {
+      alert("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleUtrSubmit = async () => {
     if (!utrInput.trim()) return;
     setLoading(true);
     try {
@@ -51,6 +147,30 @@ export default function PaymentModal({ product, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div className="relative w-full max-w-sm bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-6 text-center animate-fade-slide-in" onClick={(e) => e.stopPropagation()}>
 
+        {step === "pay" && (
+          <>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-3 shadow-lg">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+            </div>
+            <h3 className="text-lg font-bold text-white">Pay ₹{product.price}</h3>
+            <p className="text-sm text-gray-400 mb-4">{product.name}</p>
+            <button onClick={handleRazorpayPay} disabled={loading} className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-blue-900/40 flex items-center justify-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+              {loading ? "Processing..." : "Pay with Razorpay"}
+            </button>
+            <div className="my-4 flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-700"></div>
+              <span className="text-xs text-gray-500">or</span>
+              <div className="flex-1 h-px bg-gray-700"></div>
+            </div>
+            <button onClick={() => setStep("qr")} className="w-full px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition-all border border-gray-700">
+              Pay via UPI (Manual)
+            </button>
+            <p className="mt-3 text-[10px] text-gray-500 font-mono break-all bg-gray-800 rounded px-2 py-1">Order: {orderId}</p>
+            <button onClick={onClose} className="mt-3 w-full px-4 py-2 text-gray-400 hover:text-white text-sm rounded-lg transition-all">Cancel</button>
+          </>
+        )}
+
         {step === "qr" && (
           <>
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-3 shadow-lg">
@@ -69,7 +189,7 @@ export default function PaymentModal({ product, onClose }) {
             <button onClick={() => setStep("utr")} className="mt-3 w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-emerald-900/40">
               I've Paid — Enter UTR
             </button>
-            <button onClick={onClose} className="mt-2 w-full px-4 py-2 text-gray-400 hover:text-white text-sm rounded-lg transition-all">Cancel</button>
+            <button onClick={() => setStep("pay")} className="mt-2 w-full px-4 py-2 text-gray-400 hover:text-white text-sm rounded-lg transition-all">Back</button>
           </>
         )}
 
@@ -81,7 +201,7 @@ export default function PaymentModal({ product, onClose }) {
             <h3 className="text-lg font-bold text-white">Verify Payment</h3>
             <p className="text-sm text-gray-400 mb-4">Enter the UTR from your transaction</p>
             <input type="text" value={utrInput} onChange={(e) => setUtrInput(e.target.value)} placeholder="e.g. HDFC25012345678" className="w-full px-4 py-3 bg-gray-800 text-white font-mono text-sm text-center rounded-xl border border-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 outline-none transition-all" />
-            <button onClick={handleSubmit} disabled={!utrInput.trim() || loading} className="mt-4 w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-emerald-900/40">
+            <button onClick={handleUtrSubmit} disabled={!utrInput.trim() || loading} className="mt-4 w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-emerald-900/40">
               {loading ? "Submitting..." : "Verify & Complete"}
             </button>
             <button onClick={() => setStep("qr")} className="mt-2 w-full px-4 py-2 text-gray-400 hover:text-white text-sm rounded-lg transition-all">Back</button>
@@ -89,18 +209,26 @@ export default function PaymentModal({ product, onClose }) {
         )}
 
         {step === "success" && (
-          <>
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+          <div className="animate-fade-slide-in">
+            <div className="relative w-20 h-20 mx-auto mb-4">
+              <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              </div>
             </div>
-            <h3 className="text-lg font-bold text-emerald-400">Payment Verified!</h3>
-            <p className="text-xs text-gray-400 mt-1 font-mono">UTR: {utrInput}</p>
-            <p className="text-[10px] text-gray-500 font-mono">Order: {orderId}</p>
-            <button onClick={() => { window.open(product.form, "_blank"); onClose(); }} className="mt-5 w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-blue-900/40">
+            <h3 className="text-2xl font-extrabold text-emerald-400">Payment Successful!</h3>
+            <p className="text-sm text-gray-300 mt-2">Your order has been placed successfully.</p>
+            {utrInput && <p className="text-xs text-gray-400 mt-2 font-mono">UTR: {utrInput}</p>}
+            {razorpayOrderId && <p className="text-[10px] text-gray-500 font-mono">Order: {razorpayOrderId}</p>}
+            <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <p className="text-xs text-emerald-300">✅ Thank you for your purchase!</p>
+              <p className="text-[10px] text-gray-400 mt-1">Click below to fill the form and receive your PDF instantly.</p>
+            </div>
+            <button onClick={() => { window.open(product.form, "_blank"); onClose(); }} className="mt-5 w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-blue-900/40">
               Fill Google Form to Get PDF
             </button>
             <button onClick={onClose} className="mt-2 w-full px-4 py-2 text-gray-400 hover:text-white text-sm rounded-lg transition-all">Close</button>
-          </>
+          </div>
         )}
       </div>
     </div>

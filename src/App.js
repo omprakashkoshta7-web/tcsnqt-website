@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import ProductCard from "./components/ProductCard";
 import PaymentModal from "./components/PaymentModal";
-import AdminPanel from "./components/AdminPanel";
-import PracticeCompiler from "./components/PracticeCompiler";
 
 const API_BASE = process.env.REACT_APP_API_URL || "";
 
@@ -17,8 +15,6 @@ const PRODUCTS = [
 export default function TCSNQTApp() {
   const [activeTab, setActiveTab] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showAdmin, setShowAdmin] = useState(false);
-  const [showCompiler, setShowCompiler] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleCopyForm = (link) => {
@@ -79,9 +75,7 @@ export default function TCSNQTApp() {
         )}
       </main>
 
-      {selectedProduct && <PaymentModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />}
-      <AdminPanel isOpen={showAdmin} onClose={() => setShowAdmin(false)} />
-      <PracticeCompiler isOpen={showCompiler} onClose={() => setShowCompiler(false)} apiBase={API_BASE} />
+       {selectedProduct && <PaymentModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />}
     </div>
   );
 }

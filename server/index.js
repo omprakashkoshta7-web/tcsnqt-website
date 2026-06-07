@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const crypto = require("crypto");
+const Razorpay = require("razorpay");
 const { getDb, persistDb } = require("./db");
 const authRoutes = require("./routes/auth");
 const paymentRoutes = require("./routes/payments");
@@ -13,6 +15,68 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
+
+const razorpayInstance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_1DP5mmOlF5G5ag",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "I8XzKb0vKj2z1b1eH4d3e1a1",
+});
+
+app.post("/api/razorpay/order", async (req, res) => {
+  try {
+    const { amount, currency = "INR", receipt } = req.body;
+    if (!amount) {
+      return res.status(400).json({ error: "Amount is required" });
+    }
+    const options = {
+      amount: Math.round(amount * 100),
+      currency,
+      receipt: receipt || `rcpt_${Date.now()}`,
+    };
+    const order = await razorpayInstance.orders.create(options);
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key: process.env.RAZORPAY_KEY_ID || "rzp_test_1DP5mmOlF5G5ag",
+    });
+  } catch (err) {
+    console.error("Razorpay order error:", err);
+    res.status(500).json({ error: "Failed to create order" });
+  }
+});
+
+app.post("/api/razorpay/verify", async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, product, price } = req.body;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || "I8XzKb0vKj2z1b1eH4d3e1a1";
+    const generatedSignature = crypto
+      .createHmac("sha256", keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (generatedSignature === razorpay_signature) {
+      const db = await getDb();
+      const stmt = db.prepare(
+        "INSERT INTO payments (orderId, product, price, utr, date) VALUES (?, ?, ?, ?, ?)"
+      );
+      stmt.run([
+        razorpay_order_id,
+        product || "Unknown",
+        price || 0,
+        razorpay_payment_id,
+        new Date().toLocaleString("en-IN"),
+      ]);
+      stmt.free();
+      await persistDb();
+      res.json({ success: true, message: "Payment verified successfully" });
+    } else {
+      res.status(400).json({ success: false, error: "Invalid signature" });
+    }
+  } catch (err) {
+    console.error("Razorpay verify error:", err);
+    res.status(500).json({ success: false, error: "Verification failed" });
+  }
+});
 
 const JUDGE0_LANG = {
   python: 71,
